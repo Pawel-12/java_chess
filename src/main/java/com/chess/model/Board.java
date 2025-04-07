@@ -139,28 +139,28 @@ public class Board {
         batch.begin();
 
         for (Figure f : figures.values())
-            font.draw(batch, "" + f.getCh(), (fieldWidth * f.getX()) + 15, 480 - (fieldHeight * f.getY()) - 15);
+            font.draw(batch, "" + f.getCh(), (fieldWidth * f.getX()) + (int) (fieldWidth * 0.25), (fieldHeight * 8) - (fieldHeight * f.getY()) - (int) (fieldHeight * 0.25));
 
         batch.end();
     }
 
-    public void mouseOver(ShapeRenderer shapeRenderer, int x, int y) {
+    public void mouseOver(ShapeRenderer shapeRenderer, int x, int y, int fieldWidth, int fieldHeight) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
         shapeRenderer.setColor(new Color(0F, 0.60F, 0.04F, 1));
 
-        shapeRenderer.rect((x / 60) * 60, (7 - (y / 60)) * 60, 60, 60);
+        shapeRenderer.rect((x / fieldWidth) * fieldWidth, (7 - (y / fieldHeight)) * fieldHeight, fieldWidth, fieldHeight);
         shapeRenderer.end();
     }
 
-    public void drawPossibleMoves(ShapeRenderer shapeRenderer, MutablePair<Integer, Integer> pos) {
+    public void drawPossibleMoves(ShapeRenderer shapeRenderer, MutablePair<Integer, Integer> pos, int fieldWidth, int fieldHeight) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
         shapeRenderer.setColor(new Color(0.41F, 0.50F, 0.05F, 1));
 
         for (int i = 0; i < sideSize; i++)
             for (int j = 0; j < sideSize; j++)
                 if (figures.get(pos).canMove(this, i, j))
-                    shapeRenderer.rect(i * 60, (7 - j) * 60, 60, 60);
+                    shapeRenderer.rect(i * fieldWidth, (7 - j) * fieldHeight, fieldWidth, fieldHeight);
 
         shapeRenderer.end();
     }

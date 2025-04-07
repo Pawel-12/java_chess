@@ -7,13 +7,15 @@ import com.chess.model.ChessGame;
 
 public class Main {
     public static void main(String[] args) {
+        final int sideSize = 960;
+
         Lwjgl3ApplicationConfiguration config = new Lwjgl3ApplicationConfiguration();
         config.setTitle("CHESS");
-        config.setWindowedMode(480, 480);
+        config.setWindowedMode(sideSize, sideSize);
         config.useVsync(true);
         config.setForegroundFPS(60);
         config.setResizable(false);
 
-        new Lwjgl3Application(new ChessGame(480, 480), config);
+        new Lwjgl3Application(new ChessGame(sideSize, sideSize), config);
     }
 }

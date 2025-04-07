@@ -30,6 +30,15 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     private boolean pickedUp = false;
     private MutablePair<Integer, Integer> pickedPos;
 
+    private void initGame() {
+        this.board = new Board();
+        turn = 0;
+        pickedUp = false;
+
+        System.out.println("White turn, nr " + (turn + 1));
+        System.out.println(board);
+    }
+
     public ChessGame(int width, int height) {
         this.width = width;
         this.height = height;
@@ -37,10 +46,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         fieldWidth = width / 8;
         fieldHeight = height / 8;
 
-        this.board = new Board();
-
-        System.out.println("White turn, nr " + (turn + 1));
-        System.out.println(board);
+        initGame();
     }
 
     @Override
@@ -51,7 +57,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         FreeTypeFontGenerator fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("dejavu-sans.book.ttf"));
         FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
-        fontParameter.size = 50;
+        fontParameter.size = (int) (0.1 * width);
         fontParameter.color = new Color(0, 0, 0, 1);
         fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟";
 
@@ -80,6 +86,11 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean keyUp(int keycode) {
+        if (keycode == Input.Keys.ESCAPE)
+            Gdx.app.exit();
+        if (keycode == Input.Keys.R)
+            initGame();
+
         return false;
     }
 
@@ -90,8 +101,8 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        int x = screenX / 60;
-        int y = screenY / 60;
+        int x = screenX / fieldWidth;
+        int y = screenY / fieldHeight;
 
         if ((x > 7) || (x < 0) || (y > 7) || (y < 0))
             return true;
@@ -157,15 +168,15 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
-        board.mouseOver(shapeRenderer, screenX, screenY);
+        board.mouseOver(shapeRenderer, screenX, screenY, fieldWidth, fieldHeight);
         if (pickedUp) {
-            board.drawPossibleMoves(shapeRenderer, pickedPos);
+            board.drawPossibleMoves(shapeRenderer, pickedPos, fieldWidth, fieldHeight);
 
             SpriteBatch batch = new SpriteBatch();
             Figure fig = board.getFigures().get(pickedPos);
 
             batch.begin();
-            font.draw(batch, "" + fig.getCh(), fieldWidth * (screenX / 60) + 15, 480 - (fieldHeight * (screenY / 60)) - 15);
+            font.draw(batch, "" + fig.getCh(), fieldWidth * (screenX / fieldWidth) + (int) (fieldWidth * 0.25), height - (fieldHeight * (screenY / fieldHeight)) - (int) (fieldHeight * 0.25));
             batch.end();
         }
 
