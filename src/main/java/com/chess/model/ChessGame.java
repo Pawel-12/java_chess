@@ -4,7 +4,6 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
-import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -58,7 +57,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
         fontParameter.size = (int) (0.1 * width);
-        fontParameter.color = new Color(0, 0, 0, 1);
+        fontParameter.color = ColorScheme.Font.get();
         fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟";
 
         font = fontGenerator.generateFont(fontParameter);
@@ -70,7 +69,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     public void render() {
         board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
         mouseMoved(input.getX(), input.getY());
-        board.drawFigures(shapeRenderer, fieldWidth, fieldHeight, font);
+        board.drawFigures(fieldWidth, fieldHeight, font);
     }
 
     @Override
@@ -107,7 +106,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         if ((x > 7) || (x < 0) || (y > 7) || (y < 0))
             return true;
 
-        if (!pickedUp) {
+        if (!pickedUp && button == Input.Buttons.LEFT) {
             Figure fig = board.getFigures().get(MutablePair.of(x, y));
 
             if (fig != null && fig.getColor() == (turn % 2)) {
