@@ -4,6 +4,7 @@ import com.badlogic.gdx.ApplicationAdapter;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.Input;
 import com.badlogic.gdx.InputProcessor;
+import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
@@ -60,6 +61,10 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
         fontParameter.size = (int) (0.1 * width);
         fontParameter.color = colorScheme.Font;
+        if (colorScheme != ColorScheme.Default)
+            fontParameter.borderWidth = 3;
+        if (colorScheme == ColorScheme.BlackWhite)
+            fontParameter.borderColor = Color.WHITE;
         fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟";
 
         font = fontGenerator.generateFont(fontParameter);
@@ -96,9 +101,31 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 break;
             case Input.Keys.NUM_1:
                 colorScheme = ColorScheme.Default;
+                create();
                 break;
             case Input.Keys.NUM_2:
                 colorScheme = ColorScheme.Green;
+                create();
+                break;
+            case Input.Keys.NUM_3:
+                colorScheme = ColorScheme.Dark;
+                create();
+                break;
+            case Input.Keys.NUM_4:
+                colorScheme = ColorScheme.BlackWhite;
+                create();
+                break;
+            case Input.Keys.NUM_5:
+                colorScheme = ColorScheme.Grey;
+                create();
+                break;
+            case Input.Keys.NUM_6:
+                colorScheme = ColorScheme.CGA1;
+                create();
+                break;
+            case Input.Keys.NUM_7:
+                colorScheme = ColorScheme.CGA2;
+                create();
                 break;
         }
         return false;
