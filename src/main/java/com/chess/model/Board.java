@@ -10,6 +10,8 @@ import org.apache.commons.lang3.tuple.MutablePair;
 import java.util.Arrays;
 import java.util.Hashtable;
 
+import static com.chess.model.ChessGame.colorScheme;
+
 public class Board {
     private final int sideSize = 8;
     private Hashtable<MutablePair<Integer, Integer>, Figure> figures;
@@ -128,9 +130,9 @@ public class Board {
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
                 if (((i % 2) ^ (j % 2)) == 0)
-                    shapeRenderer.setColor(ColorScheme.BlackTile.get());
+                    shapeRenderer.setColor(colorScheme.BlackTile);
                 else
-                    shapeRenderer.setColor(ColorScheme.WhiteTile.get());
+                    shapeRenderer.setColor(colorScheme.WhiteTile);
 
                 shapeRenderer.rect(fieldWidth * i, fieldHeight * j, fieldWidth, fieldHeight);
                 shapeRenderer.end();
@@ -152,7 +154,7 @@ public class Board {
     public void mouseOver(ShapeRenderer shapeRenderer, int x, int y, int fieldWidth, int fieldHeight) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
 
-        shapeRenderer.setColor(ColorScheme.MousePointer.get());
+        shapeRenderer.setColor(colorScheme.MousePointer);
 
         shapeRenderer.rect((x / fieldWidth) * fieldWidth, (7 - (y / fieldHeight)) * fieldHeight, fieldWidth, fieldHeight);
         shapeRenderer.end();
@@ -160,7 +162,7 @@ public class Board {
 
     public void drawPossibleMoves(ShapeRenderer shapeRenderer, MutablePair<Integer, Integer> pos, int fieldWidth, int fieldHeight) {
         shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
-        shapeRenderer.setColor(ColorScheme.PossibleMove.get());
+        shapeRenderer.setColor(colorScheme.PossibleMove);
 
         for (int i = 0; i < sideSize; i++)
             for (int j = 0; j < sideSize; j++)

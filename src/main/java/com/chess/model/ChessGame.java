@@ -38,6 +38,8 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         System.out.println(board);
     }
 
+    public static ColorScheme colorScheme = ColorScheme.Default;
+
     public ChessGame(int width, int height) {
         this.width = width;
         this.height = height;
@@ -57,7 +59,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
 
         fontParameter.size = (int) (0.1 * width);
-        fontParameter.color = ColorScheme.Font.get();
+        fontParameter.color = colorScheme.Font;
         fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟";
 
         font = fontGenerator.generateFont(fontParameter);
@@ -85,11 +87,20 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean keyUp(int keycode) {
-        if (keycode == Input.Keys.ESCAPE)
-            Gdx.app.exit();
-        if (keycode == Input.Keys.R)
-            initGame();
-
+        switch (keycode) {
+            case Input.Keys.ESCAPE:
+                Gdx.app.exit();
+                break;
+            case Input.Keys.R:
+                initGame();
+                break;
+            case Input.Keys.NUM_1:
+                colorScheme = ColorScheme.Default;
+                break;
+            case Input.Keys.NUM_2:
+                colorScheme = ColorScheme.Green;
+                break;
+        }
         return false;
     }
 
