@@ -14,9 +14,14 @@ import com.badlogic.gdx.utils.ScreenUtils;
 import com.chess.model.figures.Figure;
 import org.apache.commons.lang3.tuple.MutablePair;
 
+import java.util.ArrayList;
+
 import static com.badlogic.gdx.Gdx.input;
 
 public class ChessGame extends ApplicationAdapter implements InputProcessor {
+    enum GameState {Menu, Playing, Finished}
+
+    public static ColorScheme colorScheme = ColorScheme.Default;
     private int width;
     private int height;
 
@@ -25,28 +30,27 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     private ShapeRenderer shapeRenderer;
 
-    private Board board;
+    private Board board = new Board();
     private BitmapFont font;
     private BitmapFont fontWhite;
 
     private int turn = 0;
     private boolean pickedUp = false;
     private MutablePair<Integer, Integer> pickedPos;
-    private boolean gameFinished = false;
+    private GameState gameState;
     private float deltaSum = 0.0F;
+    private ArrayList<Button> buttons = new ArrayList<>();
 
     private void initGame() {
         this.board = new Board();
         turn = 0;
         pickedUp = false;
         deltaSum = 0.0F;
-        gameFinished = false;
+        gameState = GameState.Playing;
 
         System.out.println("White turn, nr " + (turn + 1));
         System.out.println(board);
     }
-
-    public static ColorScheme colorScheme = ColorScheme.Default;
 
     public ChessGame(int width, int height) {
         this.width = width;
@@ -55,7 +59,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         fieldWidth = width / 8;
         fieldHeight = height / 8;
 
-        initGame();
+        gameState = GameState.Menu;
     }
 
     @Override
@@ -72,44 +76,66 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
             fontParameter.borderWidth = 3;
         if (colorScheme == ColorScheme.BlackWhite)
             fontParameter.borderColor = Color.WHITE;
-        fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟ABCEHIKLNOTW";
+        fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟ABCEHIKLNOPSTVW";
 
         font = fontGenerator.generateFont(fontParameter);
 
         fontParameter.color = Color.WHITE;
+        fontParameter.borderWidth = 3;
+        fontParameter.borderColor = Color.BLACK;
         fontWhite = fontGenerator.generateFont(fontParameter);
 
         fontGenerator.dispose();
+
+        fontWhite.setColor(Color.FIREBRICK);
+        buttons.add(new Button((0.75F * width) / 2, (0.55F * height), 0.25F * width, 0.1F * height, fontWhite, "PVP"));
+        buttons.add(new Button((0.75F * width) / 2, (0.44F * height), 0.25F * width, 0.1F * height, fontWhite, "PVE"));
+        buttons.add(new Button((0.75F * width) / 2, (0.33F * height), 0.25F * width, 0.1F * height, fontWhite, "EVE"));
+        fontWhite.setColor(Color.WHITE);
     }
 
     @Override
     public void render() {
         ScreenUtils.clear(0, 0, 0, 1, true);
 
-        if (gameFinished) {
-            SpriteBatch batch = new SpriteBatch();
-            batch.begin();
+        switch (gameState) {
+            case Menu:
+                board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
+                buttons.forEach(b -> b.draw(shapeRenderer));
 
-            GlyphLayout layout = new GlyphLayout(fontWhite, turn % 2 == 0 ? "WHITE WON" : "BLACK WON");
+                SpriteBatch batch1 = new SpriteBatch();
+                batch1.begin();
+                GlyphLayout layout1 = new GlyphLayout(fontWhite, "CHESS");
+                fontWhite.draw(batch1, "CHESS", (width - layout1.width) / 2.0F, (0.9F * height - layout1.height));
+                batch1.end();
+                break;
 
-            fontWhite.draw(batch, turn % 2 == 0 ? "WHITE WON" : "BLACK WON", (width - layout.width) / 2.0F, (height + layout.height) / 2.0F);
-            batch.end();
+            case Playing:
+                board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
+                mouseMoved(input.getX(), input.getY());
+                board.drawFigures(fieldWidth, fieldHeight, font);
+                break;
 
-            if ((deltaSum += Gdx.graphics.getDeltaTime()) > 3.0F)
-                initGame();
-            return;
+            case Finished:
+                SpriteBatch batch = new SpriteBatch();
+                batch.begin();
+
+                GlyphLayout layout = new GlyphLayout(fontWhite, turn % 2 == 0 ? "♛WHITE WON♛" : "♛BLACK WON♛");
+
+                fontWhite.draw(batch, layout, (width - layout.width) / 2.0F, (height + layout.height) / 2.0F);
+                batch.end();
+
+                if ((deltaSum += Gdx.graphics.getDeltaTime()) > 2.0F)
+                    gameState = GameState.Menu;
+                break;
         }
-
-
-        board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
-        mouseMoved(input.getX(), input.getY());
-        board.drawFigures(fieldWidth, fieldHeight, font);
     }
 
     @Override
     public void dispose() {
         shapeRenderer.dispose();
         font.dispose();
+        fontWhite.dispose();
     }
 
     @Override
@@ -124,37 +150,31 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 Gdx.app.exit();
                 break;
             case Input.Keys.R:
-                initGame();
+                gameState = GameState.Menu;
                 break;
             case Input.Keys.NUM_1:
                 colorScheme = ColorScheme.Default;
-                create();
                 break;
             case Input.Keys.NUM_2:
                 colorScheme = ColorScheme.Green;
-                create();
                 break;
             case Input.Keys.NUM_3:
                 colorScheme = ColorScheme.Dark;
-                create();
                 break;
             case Input.Keys.NUM_4:
                 colorScheme = ColorScheme.BlackWhite;
-                create();
                 break;
             case Input.Keys.NUM_5:
                 colorScheme = ColorScheme.Grey;
-                create();
                 break;
             case Input.Keys.NUM_6:
                 colorScheme = ColorScheme.CGA1;
-                create();
                 break;
             case Input.Keys.NUM_7:
                 colorScheme = ColorScheme.CGA2;
-                create();
                 break;
         }
+        create();
         return false;
     }
 
@@ -165,57 +185,63 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean touchDown(int screenX, int screenY, int pointer, int button) {
-        int x = screenX / fieldWidth;
-        int y = screenY / fieldHeight;
+        switch (gameState) {
+            case Menu:
+                if (buttons.get(0).pointInside(screenX, screenY) && button == Input.Buttons.LEFT)
+                    gameState = GameState.Playing;
 
-        // position outside board
-        if ((x > 7) || (x < 0) || (y > 7) || (y < 0))
-            return true;
+                break;
 
-        // pick up
-        if (!pickedUp && button == Input.Buttons.LEFT) {
-            Figure fig = board.getFigures().get(MutablePair.of(x, y));
+            case Playing:
+                int x = screenX / fieldWidth;
+                int y = screenY / fieldHeight;
 
-            if (fig != null && fig.getColor() == (turn % 2)) {
-                pickedPos = new MutablePair<>(x, y);
-                pickedUp = true;
-                System.out.println("Picked up " + fig.getCh() + " " + pickedPos);
-            }
+                // position outside board
+                if ((x > 7) || (x < 0) || (y > 7) || (y < 0))
+                    return true;
 
-        } else {
-            // put down
-            if (button == Input.Buttons.RIGHT) {
-                pickedUp = false;
-                pickedPos = null;
-                return true;
-            }
+                // pick up
+                if (!pickedUp && button == Input.Buttons.LEFT) {
+                    Figure fig = board.getFigures().get(MutablePair.of(x, y));
 
-            // same position or not valid move
-            Figure fig = board.getFigures().get(pickedPos);
-            if (pickedPos.equals(MutablePair.of(x, y)) || !fig.tryMove(board, x, y))
-                return true;
+                    if (fig != null && fig.getColor() == (turn % 2)) {
+                        pickedPos = new MutablePair<>(x, y);
+                        pickedUp = true;
+                        System.out.println("Picked up " + fig.getCh() + " " + pickedPos);
+                    }
 
-            Figure temp = board.getFigures().get(MutablePair.of(x, y));
-            if (temp != null && (temp.getCh() == '♔' || temp.getCh() == '♚')) {
-                System.out.println(temp.getColor() == 0 ? "Black won" : "White won");
-                gameFinished = true;
-                return true;
-            }
+                } else {
+                    // put down
+                    if (button == Input.Buttons.RIGHT) {
+                        pickedUp = false;
+                        pickedPos = null;
+                        return true;
+                    }
 
-            // update figures map
-            board.getFigures().put(MutablePair.of(x, y), fig);
-            board.getFigures().remove(pickedPos);
-            pickedUp = false;
-            System.out.println("Put down " + board.getFigures().get(MutablePair.of(x, y)).getCh() + " " + MutablePair.of(x, y) + "\n");
+                    // same position or not valid move
+                    Figure fig = board.getFigures().get(pickedPos);
+                    if (pickedPos.equals(MutablePair.of(x, y)) || !fig.tryMove(board, x, y))
+                        return true;
 
-            turn++;
+                    Figure temp = board.getFigures().get(MutablePair.of(x, y));
+                    if (temp != null && (temp.getCh() == '♔' || temp.getCh() == '♚')) {
+                        System.out.println(temp.getColor() == 0 ? "Black won" : "White won");
+                        gameState = GameState.Finished;
+                        return true;
+                    }
 
-            if (turn % 2 == 0)
-                System.out.println("White turn, nr " + (turn + 1));
-            else
-                System.out.println("Black turn, nr " + (turn + 1));
+                    // update figures map
+                    board.getFigures().put(MutablePair.of(x, y), fig);
+                    board.getFigures().remove(pickedPos);
+                    pickedUp = false;
+                    System.out.println("Put down " + board.getFigures().get(MutablePair.of(x, y)).getCh() + " " + MutablePair.of(x, y) + "\n");
 
-            System.out.println(board);
+                    turn++;
+
+                    System.out.println((turn % 2 == 0 ? "White" : "Black") + " turn, nr " + (turn + 1));
+                    System.out.println(board);
+                }
+                break;
         }
         return true;
     }
@@ -237,18 +263,21 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
-        board.mouseOver(shapeRenderer, screenX, screenY, fieldWidth, fieldHeight);
-        if (pickedUp) {
-            board.drawPossibleMoves(shapeRenderer, pickedPos, fieldWidth, fieldHeight);
+        switch (gameState) {
+            case Playing:
+                board.mouseOver(shapeRenderer, screenX, screenY, fieldWidth, fieldHeight);
+                if (pickedUp) {
+                    board.drawPossibleMoves(shapeRenderer, pickedPos, fieldWidth, fieldHeight);
 
-            SpriteBatch batch = new SpriteBatch();
-            Figure fig = board.getFigures().get(pickedPos);
+                    SpriteBatch batch = new SpriteBatch();
+                    Figure fig = board.getFigures().get(pickedPos);
 
-            batch.begin();
-            font.draw(batch, "" + fig.getCh(), fieldWidth * (screenX / fieldWidth) + (int) (fieldWidth * 0.25), height - (fieldHeight * (screenY / fieldHeight)) - (int) (fieldHeight * 0.25));
-            batch.end();
+                    batch.begin();
+                    font.draw(batch, "" + fig.getCh(), fieldWidth * (screenX / fieldWidth) + (int) (fieldWidth * 0.25), height - (fieldHeight * (screenY / fieldHeight)) - (int) (fieldHeight * 0.25));
+                    batch.end();
+                }
+                break;
         }
-
         return true;
     }
 

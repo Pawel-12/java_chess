@@ -3,7 +3,6 @@ package com.chess.model;
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
-import com.badlogic.gdx.utils.ScreenUtils;
 import com.chess.model.figures.*;
 import org.apache.commons.lang3.tuple.MutablePair;
 
@@ -30,38 +29,6 @@ public class Board {
     }
 
     private void createFigures() {
-//        for (int i = 0; i < 8; i++) {
-//            figures.add(new Pawn(i, 1, 0));
-//            figures.add(new Pawn(i, sideSize - 2, 1));
-//        }
-//
-//        figures.add(new Rook(0, 0, 0));
-//        figures.add(new Rook(sideSize - 1, 0, 0));
-//
-//        figures.add(new Rook(sideSize - 1, sideSize - 1, 1));
-//        figures.add(new Rook(0, sideSize - 1, 1));
-//
-//
-//        figures.add(new Knight(1, 0, 0));
-//        figures.add(new Knight(sideSize - 2, 0, 0));
-//
-//        figures.add(new Knight(sideSize - 2, sideSize - 1, 1));
-//        figures.add(new Knight(1, sideSize - 1, 1));
-//
-//
-//        figures.add(new Bishop(2, 0, 0));
-//        figures.add(new Bishop(sideSize - 3, 0, 0));
-//
-//        figures.add(new Bishop(sideSize - 3, sideSize - 1, 1));
-//        figures.add(new Bishop(2, sideSize - 1, 1));
-//
-//
-//        figures.add(new Queen(3, 0, 0));
-//        figures.add(new King(sideSize - 4, 0, 0));
-//
-//        figures.add(new Queen(3, sideSize - 1, 1));
-//        figures.add(new King(sideSize - 4, sideSize - 1, 1));
-
         enum Color {
             Black(0), White(1);
             private int v;
@@ -123,8 +90,6 @@ public class Board {
     }
 
     public void drawBoard(ShapeRenderer shapeRenderer, int fieldWidth, int fieldHeight) {
-        ScreenUtils.clear(0, 0, 0, 1);
-
         for (int j = 0; j < 8; j++) {
             for (int i = 0; i < 8; i++) {
                 shapeRenderer.begin(ShapeRenderer.ShapeType.Filled);
