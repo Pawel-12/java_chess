@@ -6,6 +6,7 @@ import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.chess.model.figures.*;
 import org.apache.commons.lang3.tuple.MutablePair;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Hashtable;
 
@@ -135,6 +136,17 @@ public class Board {
                     shapeRenderer.rect(i * fieldWidth, (7 - j) * fieldHeight, fieldWidth, fieldHeight);
 
         shapeRenderer.end();
+    }
+
+    public ArrayList<MutablePair<Integer, Integer>> getPossibleMoves(Figure fig) {
+        ArrayList<MutablePair<Integer, Integer>> result = new ArrayList<>();
+
+        for (int i = 0; i < sideSize; i++)
+            for (int j = 0; j < sideSize; j++)
+                if (fig.canMove(this, i, j))
+                    result.add(new MutablePair<>(i, j));
+
+        return result;
     }
 
     public Hashtable<MutablePair<Integer, Integer>, Figure> getFigures() {

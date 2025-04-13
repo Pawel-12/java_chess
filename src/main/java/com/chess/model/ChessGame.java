@@ -15,11 +15,12 @@ import com.chess.model.figures.Figure;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.util.ArrayList;
+import java.util.Random;
 
 import static com.badlogic.gdx.Gdx.input;
 
 public class ChessGame extends ApplicationAdapter implements InputProcessor {
-    enum GameState {Menu, Playing, Finished}
+    enum GameState {Menu, Playing, EVE, Finished}
 
     public static ColorScheme colorScheme = ColorScheme.Default;
     private int width;
@@ -40,7 +41,8 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     private GameState gameState;
     private float deltaSum = 0.0F;
     private ArrayList<Button> buttons = new ArrayList<>();
-
+    private float botMoveDelta = 0.0F;
+    
     private void initGame() {
         this.board = new Board();
         turn = 0;
@@ -116,6 +118,16 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 board.drawFigures(fieldWidth, fieldHeight, font);
                 break;
 
+            case EVE:
+                board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
+                board.drawFigures(fieldWidth, fieldHeight, font);
+
+                if ((botMoveDelta += Gdx.graphics.getDeltaTime()) > 1.0F) {
+                    botMove(turn % 2);
+                    botMoveDelta = 0.0F;
+                }
+                break;
+
             case Finished:
                 SpriteBatch batch = new SpriteBatch();
                 batch.begin();
@@ -188,7 +200,13 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         switch (gameState) {
             case Menu:
                 if (buttons.get(0).pointInside(screenX, screenY) && button == Input.Buttons.LEFT)
-                    gameState = GameState.Playing;
+                    initGame();
+                if (buttons.get(1).pointInside(screenX, screenY) && button == Input.Buttons.LEFT)
+                    initGame();
+                if (buttons.get(2).pointInside(screenX, screenY) && button == Input.Buttons.LEFT) {
+                    initGame();
+                    gameState = GameState.EVE;
+                }
 
                 break;
 
@@ -223,23 +241,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                     if (pickedPos.equals(MutablePair.of(x, y)) || !fig.tryMove(board, x, y))
                         return true;
 
-                    Figure temp = board.getFigures().get(MutablePair.of(x, y));
-                    if (temp != null && (temp.getCh() == '♔' || temp.getCh() == '♚')) {
-                        System.out.println(temp.getColor() == 0 ? "Black won" : "White won");
-                        gameState = GameState.Finished;
-                        return true;
-                    }
-
-                    // update figures map
-                    board.getFigures().put(MutablePair.of(x, y), fig);
-                    board.getFigures().remove(pickedPos);
-                    pickedUp = false;
-                    System.out.println("Put down " + board.getFigures().get(MutablePair.of(x, y)).getCh() + " " + MutablePair.of(x, y) + "\n");
-
-                    turn++;
-
-                    System.out.println((turn % 2 == 0 ? "White" : "Black") + " turn, nr " + (turn + 1));
-                    System.out.println(board);
+                    return afterMoveUpdate(fig, x, y);
                 }
                 break;
         }
@@ -284,5 +286,47 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     @Override
     public boolean scrolled(float amountX, float amountY) {
         return false;
+    }
+
+    private void botMove(int color) {
+        var figs = board.getFigures().values();
+        ArrayList<MutablePair<Figure, ArrayList<MutablePair<Integer, Integer>>>> possibleMoves = new ArrayList<>();
+
+        for (var f : figs) {
+            if (f.getColor() == color)
+                if (!board.getPossibleMoves(f).isEmpty())
+                    possibleMoves.add(new MutablePair<>(f, board.getPossibleMoves(f)));
+        }
+        Random rand = new Random();
+        var figPair = possibleMoves.get(rand.nextInt(possibleMoves.size()));
+        var pos = figPair.right.get(rand.nextInt(figPair.right.size()));
+
+        pickedPos = new MutablePair<>(figPair.left.getX(), figPair.left.getY());
+        figPair.left.tryMove(board, pos.left, pos.right);
+
+
+        afterMoveUpdate(figPair.left, pos.left, pos.right);
+    }
+
+    private boolean afterMoveUpdate(Figure fig, int x, int y) {
+        Figure temp = board.getFigures().get(MutablePair.of(x, y));
+        if (temp != null && (temp.getCh() == '♔' || temp.getCh() == '♚')) {
+            System.out.println(temp.getColor() == 0 ? "Black won" : "White won");
+            gameState = GameState.Finished;
+            return true;
+        }
+
+        // update figures map
+        board.getFigures().put(MutablePair.of(x, y), fig);
+        board.getFigures().remove(pickedPos);
+        pickedUp = false;
+        System.out.println("Put down " + board.getFigures().get(MutablePair.of(x, y)).getCh() + " " + MutablePair.of(x, y) + "\n");
+
+        turn++;
+
+        System.out.println((turn % 2 == 0 ? "White" : "Black") + " turn, nr " + (turn + 1));
+        System.out.println(board);
+
+        return true;
     }
 }
