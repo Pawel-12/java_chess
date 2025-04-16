@@ -15,6 +15,7 @@ public class Button {
     private GlyphLayout glyphs;
     private BitmapFont font;
     private Color fillColor = new Color(0.0941F, 0.2431F, 0.0471F, 1);
+    private SpriteBatch batch;
 
     public Button(float x, float y, float width, float height, BitmapFont font, String text) {
         this.x = x;
@@ -22,6 +23,7 @@ public class Button {
         this.width = width;
         this.height = height;
         this.font = font;
+        batch = new SpriteBatch(5);
 
         glyphs = new GlyphLayout(font, text);
     }
@@ -49,9 +51,8 @@ public class Button {
         shapeRenderer.rect(x, y, width, height);
         shapeRenderer.end();
 
-        SpriteBatch batch1 = new SpriteBatch();
-        batch1.begin();
-        font.draw(batch1, glyphs, x + ((width - glyphs.width) / 2), (y + height) - ((height - glyphs.height) / 2));
-        batch1.end();
+        batch.begin();
+        font.draw(batch, glyphs, x + ((width - glyphs.width) / 2), (y + height) - ((height - glyphs.height) / 2));
+        batch.end();
     }
 }

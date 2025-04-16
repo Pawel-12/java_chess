@@ -17,6 +17,7 @@ public class Board {
     private Hashtable<MutablePair<Integer, Integer>, Figure> figures;
 
     private char[][] fields;
+    private SpriteBatch batch;
 
     public Board() {
         this.figures = new Hashtable<>();
@@ -27,6 +28,7 @@ public class Board {
             Arrays.fill(fields[i], '.');
 
         createFigures();
+        batch = new SpriteBatch(64);
     }
 
     private void createFigures() {
@@ -107,8 +109,6 @@ public class Board {
     }
 
     public void drawFigures(int fieldWidth, int fieldHeight, BitmapFont font) {
-        SpriteBatch batch = new SpriteBatch();
-
         batch.begin();
 
         for (Figure f : figures.values())

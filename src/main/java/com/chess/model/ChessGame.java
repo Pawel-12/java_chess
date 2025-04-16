@@ -30,8 +30,9 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     private int fieldHeight;
 
     private ShapeRenderer shapeRenderer;
+    private SpriteBatch batch;
 
-    private Board board = new Board();
+    private Board board;
     private BitmapFont font;
     private BitmapFont fontWhite;
 
@@ -42,7 +43,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     private float deltaSum = 0.0F;
     private ArrayList<Button> buttons = new ArrayList<>();
     private float botMoveDelta = 0.0F;
-    
+
     private void initGame() {
         this.board = new Board();
         turn = 0;
@@ -66,6 +67,8 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public void create() {
+        batch = new SpriteBatch(10);
+        board = new Board();
         shapeRenderer = new ShapeRenderer();
         input.setInputProcessor(this);
 
@@ -105,11 +108,10 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
                 buttons.forEach(b -> b.draw(shapeRenderer));
 
-                SpriteBatch batch1 = new SpriteBatch();
-                batch1.begin();
+                batch.begin();
                 GlyphLayout layout1 = new GlyphLayout(fontWhite, "CHESS");
-                fontWhite.draw(batch1, "CHESS", (width - layout1.width) / 2.0F, (0.9F * height - layout1.height));
-                batch1.end();
+                fontWhite.draw(batch, "CHESS", (width - layout1.width) / 2.0F, (0.9F * height - layout1.height));
+                batch.end();
                 break;
 
             case Playing:
@@ -122,14 +124,13 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
                 board.drawFigures(fieldWidth, fieldHeight, font);
 
-                if ((botMoveDelta += Gdx.graphics.getDeltaTime()) > 1.0F) {
+                if ((botMoveDelta += Gdx.graphics.getDeltaTime()) > 2.0F) {
                     botMove(turn % 2);
                     botMoveDelta = 0.0F;
                 }
                 break;
 
             case Finished:
-                SpriteBatch batch = new SpriteBatch();
                 batch.begin();
 
                 GlyphLayout layout = new GlyphLayout(fontWhite, turn % 2 == 0 ? "♛WHITE WON♛" : "♛BLACK WON♛");
@@ -137,8 +138,10 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 fontWhite.draw(batch, layout, (width - layout.width) / 2.0F, (height + layout.height) / 2.0F);
                 batch.end();
 
-                if ((deltaSum += Gdx.graphics.getDeltaTime()) > 2.0F)
+                if ((deltaSum += Gdx.graphics.getDeltaTime()) > 2.0F) {
                     gameState = GameState.Menu;
+                    deltaSum = 0.0F;
+                }
                 break;
         }
     }
@@ -201,8 +204,9 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
             case Menu:
                 if (buttons.get(0).pointInside(screenX, screenY) && button == Input.Buttons.LEFT)
                     initGame();
-                if (buttons.get(1).pointInside(screenX, screenY) && button == Input.Buttons.LEFT)
+                if (buttons.get(1).pointInside(screenX, screenY) && button == Input.Buttons.LEFT) {
                     initGame();
+                }
                 if (buttons.get(2).pointInside(screenX, screenY) && button == Input.Buttons.LEFT) {
                     initGame();
                     gameState = GameState.EVE;
@@ -271,7 +275,6 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 if (pickedUp) {
                     board.drawPossibleMoves(shapeRenderer, pickedPos, fieldWidth, fieldHeight);
 
-                    SpriteBatch batch = new SpriteBatch();
                     Figure fig = board.getFigures().get(pickedPos);
 
                     batch.begin();
