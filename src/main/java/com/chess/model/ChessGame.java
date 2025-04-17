@@ -20,7 +20,7 @@ import java.util.Random;
 import static com.badlogic.gdx.Gdx.input;
 
 public class ChessGame extends ApplicationAdapter implements InputProcessor {
-    enum GameState {Menu, Playing, EVE, Finished}
+    enum GameState {Menu, Playing, PVE, EVE, Finished}
 
     public static ColorScheme colorScheme = ColorScheme.Default;
     private int width;
@@ -43,16 +43,41 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     private float deltaSum = 0.0F;
     private ArrayList<Button> buttons = new ArrayList<>();
     private float botMoveDelta = 0.0F;
+    private int botColor = 1;
 
     private void initGame() {
         this.board = new Board();
         turn = 0;
         pickedUp = false;
+        pickedPos = null;
         deltaSum = 0.0F;
+        botMoveDelta = 0.0F;
         gameState = GameState.Playing;
 
         System.out.println("White turn, nr " + (turn + 1));
         System.out.println(board);
+    }
+
+    private void reloadColorsFonts() {
+        FreeTypeFontGenerator fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("dejavu-sans.book.ttf"));
+        FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
+
+        fontParameter.size = (int) (0.1 * width);
+        fontParameter.color = colorScheme.Font;
+        if (colorScheme != ColorScheme.Default)
+            fontParameter.borderWidth = 3;
+        if (colorScheme == ColorScheme.BlackWhite)
+            fontParameter.borderColor = Color.WHITE;
+        fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟ABCEHIKLNOPRSTVW";
+
+        font = fontGenerator.generateFont(fontParameter);
+
+        fontParameter.color = Color.WHITE;
+        fontParameter.borderWidth = 3;
+        fontParameter.borderColor = Color.BLACK;
+        fontWhite = fontGenerator.generateFont(fontParameter);
+
+        fontGenerator.dispose();
     }
 
     public ChessGame(int width, int height) {
@@ -71,31 +96,16 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         board = new Board();
         shapeRenderer = new ShapeRenderer();
         input.setInputProcessor(this);
-
-        FreeTypeFontGenerator fontGenerator = new FreeTypeFontGenerator(Gdx.files.internal("dejavu-sans.book.ttf"));
-        FreeTypeFontGenerator.FreeTypeFontParameter fontParameter = new FreeTypeFontGenerator.FreeTypeFontParameter();
-
-        fontParameter.size = (int) (0.1 * width);
-        fontParameter.color = colorScheme.Font;
-        if (colorScheme != ColorScheme.Default)
-            fontParameter.borderWidth = 3;
-        if (colorScheme == ColorScheme.BlackWhite)
-            fontParameter.borderColor = Color.WHITE;
-        fontParameter.characters = "♖♘♗♕♔♙♜♞♝♛♚♟ABCEHIKLNOPSTVW";
-
-        font = fontGenerator.generateFont(fontParameter);
-
-        fontParameter.color = Color.WHITE;
-        fontParameter.borderWidth = 3;
-        fontParameter.borderColor = Color.BLACK;
-        fontWhite = fontGenerator.generateFont(fontParameter);
-
-        fontGenerator.dispose();
+        reloadColorsFonts();
 
         fontWhite.setColor(Color.FIREBRICK);
         buttons.add(new Button((0.75F * width) / 2, (0.55F * height), 0.25F * width, 0.1F * height, fontWhite, "PVP"));
         buttons.add(new Button((0.75F * width) / 2, (0.44F * height), 0.25F * width, 0.1F * height, fontWhite, "PVE"));
         buttons.add(new Button((0.75F * width) / 2, (0.33F * height), 0.25F * width, 0.1F * height, fontWhite, "EVE"));
+
+        buttons.add(new Button((0.90F * width) / 2, (0.22F * height), 0.1F * width, 0.1F * height, fontWhite, "♙"));
+        buttons.get(3).setFillColor(Color.WHITE);
+        buttons.get(3).setBorderRatio(0.05F);
         fontWhite.setColor(Color.WHITE);
     }
 
@@ -118,6 +128,19 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
                 mouseMoved(input.getX(), input.getY());
                 board.drawFigures(fieldWidth, fieldHeight, font);
+                break;
+
+            case PVE:
+                board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
+                board.drawFigures(fieldWidth, fieldHeight, font);
+
+                if (turn % 2 != botColor) {
+                    mouseMoved(input.getX(), input.getY());
+
+                } else if ((botMoveDelta += Gdx.graphics.getDeltaTime()) > 2.0F) {
+                    botMove(botColor);
+                    botMoveDelta = 0.0F;
+                }
                 break;
 
             case EVE:
@@ -189,7 +212,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                 colorScheme = ColorScheme.CGA2;
                 break;
         }
-        create();
+        reloadColorsFonts();
         return false;
     }
 
@@ -206,14 +229,24 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                     initGame();
                 if (buttons.get(1).pointInside(screenX, screenY) && button == Input.Buttons.LEFT) {
                     initGame();
+                    gameState = GameState.PVE;
                 }
                 if (buttons.get(2).pointInside(screenX, screenY) && button == Input.Buttons.LEFT) {
                     initGame();
                     gameState = GameState.EVE;
                 }
-
+                if (buttons.get(3).pointInside(screenX, screenY) && button == Input.Buttons.LEFT) {
+                    botColor = botColor == 1 ? 0 : 1;
+                    if (botColor == 0)
+                        buttons.get(3).setFillColor(Color.BLACK);
+                    else
+                        buttons.get(3).setFillColor(Color.WHITE);
+                }
                 break;
 
+            case PVE:
+                if ((turn % 2) == botColor)
+                    break;
             case Playing:
                 int x = screenX / fieldWidth;
                 int y = screenY / fieldHeight;
@@ -270,6 +303,9 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     @Override
     public boolean mouseMoved(int screenX, int screenY) {
         switch (gameState) {
+            case PVE:
+                if ((turn % 2) == botColor)
+                    break;
             case Playing:
                 board.mouseOver(shapeRenderer, screenX, screenY, fieldWidth, fieldHeight);
                 if (pickedUp) {

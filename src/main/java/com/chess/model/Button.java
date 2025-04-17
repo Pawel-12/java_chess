@@ -16,6 +16,7 @@ public class Button {
     private BitmapFont font;
     private Color fillColor = new Color(0.0941F, 0.2431F, 0.0471F, 1);
     private SpriteBatch batch;
+    private float borderRatio = 0.02F;
 
     public Button(float x, float y, float width, float height, BitmapFont font, String text) {
         this.x = x;
@@ -47,12 +48,20 @@ public class Button {
 
         shapeRenderer.set((ShapeRenderer.ShapeType.Line));
         shapeRenderer.setColor(Color.BLACK);
-        Gdx.gl.glLineWidth(0.02F * width);
+        Gdx.gl.glLineWidth(borderRatio * width);
         shapeRenderer.rect(x, y, width, height);
         shapeRenderer.end();
 
         batch.begin();
         font.draw(batch, glyphs, x + ((width - glyphs.width) / 2), (y + height) - ((height - glyphs.height) / 2));
         batch.end();
+    }
+
+    public void setFillColor(Color fillColor) {
+        this.fillColor = fillColor;
+    }
+
+    public void setBorderRatio(float borderRatio) {
+        this.borderRatio = borderRatio;
     }
 }
