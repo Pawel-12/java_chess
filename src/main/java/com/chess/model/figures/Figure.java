@@ -40,4 +40,8 @@ public abstract class Figure {
     public boolean canMove(Board board, int x, int y) {
         return false;
     }
+
+    public void setCh(char ch) {
+        this.ch = ch;
+    }
 }

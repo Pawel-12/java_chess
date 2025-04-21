@@ -1,6 +1,7 @@
 package com.chess.model;
 
 import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.GlyphLayout;
 import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.chess.model.figures.*;
@@ -33,7 +34,7 @@ public class Board {
 
     private void createFigures() {
         enum Color {
-            Black(0), White(1);
+            White(0), Black(1);
             private int v;
 
             Color(int i) {
@@ -42,36 +43,36 @@ public class Board {
         }
 
         for (int i = 0; i < 8; i++) {
-            figures.put(new MutablePair<>(i, 1), new Pawn(i, 1, Color.Black.v));
-            figures.put(new MutablePair<>(i, sideSize - 2), new Pawn(i, sideSize - 2, Color.White.v));
+            figures.put(new MutablePair<>(i, 1), new Pawn(i, 1, Color.White.v));
+            figures.put(new MutablePair<>(i, sideSize - 2), new Pawn(i, sideSize - 2, Color.Black.v));
         }
 
-        figures.put(new MutablePair<>(0, 0), new Rook(0, 0, Color.Black.v));
-        figures.put(new MutablePair<>(sideSize - 1, 0), new Rook(sideSize - 1, 0, Color.Black.v));
+        figures.put(new MutablePair<>(0, 0), new Rook(0, 0, Color.White.v));
+        figures.put(new MutablePair<>(sideSize - 1, 0), new Rook(sideSize - 1, 0, Color.White.v));
 
-        figures.put(new MutablePair<>(sideSize - 1, sideSize - 1), new Rook(sideSize - 1, sideSize - 1, Color.White.v));
-        figures.put(new MutablePair<>(0, sideSize - 1), new Rook(0, sideSize - 1, Color.White.v));
-
-
-        figures.put(new MutablePair<>(1, 0), new Knight(1, 0, Color.Black.v));
-        figures.put(new MutablePair<>(sideSize - 2, 0), new Knight(sideSize - 2, 0, Color.Black.v));
-
-        figures.put(new MutablePair<>(sideSize - 2, sideSize - 1), new Knight(sideSize - 2, sideSize - 1, Color.White.v));
-        figures.put(new MutablePair<>(1, sideSize - 1), new Knight(1, sideSize - 1, Color.White.v));
+        figures.put(new MutablePair<>(sideSize - 1, sideSize - 1), new Rook(sideSize - 1, sideSize - 1, Color.Black.v));
+        figures.put(new MutablePair<>(0, sideSize - 1), new Rook(0, sideSize - 1, Color.Black.v));
 
 
-        figures.put(new MutablePair<>(2, 0), new Bishop(2, 0, Color.Black.v));
-        figures.put(new MutablePair<>(sideSize - 3, 0), new Bishop(sideSize - 3, 0, Color.Black.v));
+        figures.put(new MutablePair<>(1, 0), new Knight(1, 0, Color.White.v));
+        figures.put(new MutablePair<>(sideSize - 2, 0), new Knight(sideSize - 2, 0, Color.White.v));
 
-        figures.put(new MutablePair<>(sideSize - 3, sideSize - 1), new Bishop(sideSize - 3, sideSize - 1, Color.White.v));
-        figures.put(new MutablePair<>(2, sideSize - 1), new Bishop(2, sideSize - 1, Color.White.v));
+        figures.put(new MutablePair<>(sideSize - 2, sideSize - 1), new Knight(sideSize - 2, sideSize - 1, Color.Black.v));
+        figures.put(new MutablePair<>(1, sideSize - 1), new Knight(1, sideSize - 1, Color.Black.v));
 
 
-        figures.put(new MutablePair<>(3, 0), new Queen(3, 0, Color.Black.v));
-        figures.put(new MutablePair<>(sideSize - 4, 0), new King(sideSize - 4, 0, Color.Black.v));
+        figures.put(new MutablePair<>(2, 0), new Bishop(2, 0, Color.White.v));
+        figures.put(new MutablePair<>(sideSize - 3, 0), new Bishop(sideSize - 3, 0, Color.White.v));
 
-        figures.put(new MutablePair<>(3, sideSize - 1), new Queen(3, sideSize - 1, Color.White.v));
-        figures.put(new MutablePair<>(sideSize - 4, sideSize - 1), new King(sideSize - 4, sideSize - 1, Color.White.v));
+        figures.put(new MutablePair<>(sideSize - 3, sideSize - 1), new Bishop(sideSize - 3, sideSize - 1, Color.Black.v));
+        figures.put(new MutablePair<>(2, sideSize - 1), new Bishop(2, sideSize - 1, Color.Black.v));
+
+
+        figures.put(new MutablePair<>(3, 0), new Queen(3, 0, Color.White.v));
+        figures.put(new MutablePair<>(sideSize - 4, 0), new King(sideSize - 4, 0, Color.White.v));
+
+        figures.put(new MutablePair<>(3, sideSize - 1), new Queen(3, sideSize - 1, Color.Black.v));
+        figures.put(new MutablePair<>(sideSize - 4, sideSize - 1), new King(sideSize - 4, sideSize - 1, Color.Black.v));
     }
 
     @Override
@@ -111,9 +112,10 @@ public class Board {
     public void drawFigures(int fieldWidth, int fieldHeight, BitmapFont font) {
         batch.begin();
 
-        for (Figure f : figures.values())
-            font.draw(batch, "" + f.getCh(), (fieldWidth * f.getX()) + (int) (fieldWidth * 0.25), (fieldHeight * 8) - (fieldHeight * f.getY()) - (int) (fieldHeight * 0.25));
-
+        for (Figure f : figures.values()) {
+            GlyphLayout l = new GlyphLayout(font, f.getCh() + "");
+            font.draw(batch, "" + f.getCh(), (fieldWidth * f.getX()) + (fieldWidth - l.width) / 2, (fieldHeight * 8) - (fieldHeight * f.getY()) - (fieldWidth - l.height) / 2);
+        }
         batch.end();
     }
 

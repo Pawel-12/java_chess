@@ -11,7 +11,7 @@ import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.g2d.freetype.FreeTypeFontGenerator;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.utils.ScreenUtils;
-import com.chess.model.figures.Figure;
+import com.chess.model.figures.*;
 import org.apache.commons.lang3.tuple.MutablePair;
 
 import java.util.ArrayList;
@@ -44,6 +44,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     private ArrayList<Button> buttons = new ArrayList<>();
     private float botMoveDelta = 0.0F;
     private int botColor = 1;
+    private char pawnPromoted = ' ';
 
     private void initGame() {
         this.board = new Board();
@@ -52,6 +53,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         pickedPos = null;
         deltaSum = 0.0F;
         botMoveDelta = 0.0F;
+        pawnPromoted = ' ';
         gameState = GameState.Playing;
 
         System.out.println("White turn, nr " + (turn + 1));
@@ -112,7 +114,6 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
     @Override
     public void render() {
         ScreenUtils.clear(0, 0, 0, 1, true);
-
         switch (gameState) {
             case Menu:
                 board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
@@ -132,15 +133,14 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
             case PVE:
                 board.drawBoard(shapeRenderer, fieldWidth, fieldHeight);
-                board.drawFigures(fieldWidth, fieldHeight, font);
-
                 if (turn % 2 != botColor) {
                     mouseMoved(input.getX(), input.getY());
 
-                } else if ((botMoveDelta += Gdx.graphics.getDeltaTime()) > 2.0F) {
+                } else if ((botMoveDelta += Gdx.graphics.getDeltaTime()) > 0.5F) {
                     botMove(botColor);
                     botMoveDelta = 0.0F;
                 }
+                board.drawFigures(fieldWidth, fieldHeight, font);
                 break;
 
             case EVE:
@@ -256,29 +256,51 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                     return true;
 
                 // pick up
-                if (!pickedUp && button == Input.Buttons.LEFT) {
+                if (button == Input.Buttons.LEFT) {
                     Figure fig = board.getFigures().get(MutablePair.of(x, y));
 
-                    if (fig != null && fig.getColor() == (turn % 2)) {
+                    if (!pickedUp && fig != null && fig.getColor() == (turn % 2)) {
                         pickedPos = new MutablePair<>(x, y);
                         pickedUp = true;
                         System.out.println("Picked up " + fig.getCh() + " " + pickedPos);
+                    } else if (pickedUp) {
+                        // same position or not valid move
+                        fig = board.getFigures().get(pickedPos);
+                        if (pickedPos.equals(MutablePair.of(x, y)) || !fig.tryMove(board, x, y))
+                            return true;
+
+                        return afterMoveUpdate(fig, x, y);
                     }
 
-                } else {
+                } else if (button == Input.Buttons.RIGHT && pickedUp) {
+                    if (pawnPromoted != ' ') {
+                        Figure fig = null;
+                        switch (pawnPromoted) {
+                            case '♖':
+                            case '♜':
+                                fig = new Rook(pickedPos.left, pickedPos.right, turn % 2);
+                                break;
+                            case '♘':
+                            case '♞':
+                                fig = new Knight(pickedPos.left, pickedPos.right, turn % 2);
+                                break;
+                            case '♗':
+                            case '♝':
+                                fig = new Bishop(pickedPos.left, pickedPos.right, turn % 2);
+                                break;
+                            case '♕':
+                            case '♛':
+                                fig = new Queen(pickedPos.left, pickedPos.right, turn % 2);
+                                break;
+                        }
+                        board.getFigures().put(pickedPos, fig);
+                    }
+
                     // put down
-                    if (button == Input.Buttons.RIGHT) {
-                        pickedUp = false;
-                        pickedPos = null;
-                        return true;
-                    }
-
-                    // same position or not valid move
-                    Figure fig = board.getFigures().get(pickedPos);
-                    if (pickedPos.equals(MutablePair.of(x, y)) || !fig.tryMove(board, x, y))
-                        return true;
-
-                    return afterMoveUpdate(fig, x, y);
+                    pickedUp = false;
+                    pickedPos = null;
+                    pawnPromoted = ' ';
+                    return true;
                 }
                 break;
         }
@@ -314,7 +336,8 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
                     Figure fig = board.getFigures().get(pickedPos);
 
                     batch.begin();
-                    font.draw(batch, "" + fig.getCh(), fieldWidth * (screenX / fieldWidth) + (int) (fieldWidth * 0.25), height - (fieldHeight * (screenY / fieldHeight)) - (int) (fieldHeight * 0.25));
+                    GlyphLayout l = new GlyphLayout(font, fig.getCh() + "");
+                    font.draw(batch, "" + fig.getCh(), fieldWidth * (screenX / fieldWidth) + (fieldWidth - l.width) / 2, height - (fieldHeight * (screenY / fieldHeight)) - (fieldWidth - l.height) / 2);
                     batch.end();
                 }
                 break;
@@ -324,7 +347,49 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
 
     @Override
     public boolean scrolled(float amountX, float amountY) {
+        switch (gameState) {
+            case PVE:
+                if ((turn % 2) == botColor)
+                    break;
+            case Playing:
+                if (pickedUp) {
+                    Figure f = board.getFigures().get(pickedPos);
+
+                    if (f instanceof Pawn && f.getY() == 7) {
+                        System.out.println("Promote white " + amountY);
+                        promoteSelect("♖♘♗♕", amountY);
+                    } else if (f instanceof Pawn && f.getY() == 0) {
+                        System.out.println("Promote black " + amountY);
+                        promoteSelect("♜♞♝♛", amountY);
+                    }
+
+                    if (pawnPromoted != ' ')
+                        f.setCh(pawnPromoted);
+                }
+                break;
+        }
         return false;
+    }
+
+    private void promoteSelect(String figures, float amountY) {
+        int index = 0;
+
+        if (pawnPromoted == ' ') {
+            pawnPromoted = figures.charAt(index);
+            System.out.println(pawnPromoted);
+            return;
+        }
+
+        index = figures.indexOf(pawnPromoted);
+        index += amountY;
+
+        if (index >= figures.length())
+            index -= figures.length();
+        if (index < 0)
+            index += figures.length();
+
+        pawnPromoted = figures.charAt(index);
+        System.out.println(pawnPromoted);
     }
 
     private void botMove(int color) {
@@ -343,6 +408,8 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         pickedPos = new MutablePair<>(figPair.left.getX(), figPair.left.getY());
         figPair.left.tryMove(board, pos.left, pos.right);
 
+        if (figPair.left instanceof Pawn && (figPair.left.getY() == 7 || figPair.left.getY() == 0))
+            figPair = new MutablePair<>(new Queen(pos.left, pos.right, color), null);
 
         afterMoveUpdate(figPair.left, pos.left, pos.right);
     }
@@ -359,6 +426,7 @@ public class ChessGame extends ApplicationAdapter implements InputProcessor {
         board.getFigures().put(MutablePair.of(x, y), fig);
         board.getFigures().remove(pickedPos);
         pickedUp = false;
+        pickedPos = null;
         System.out.println("Put down " + board.getFigures().get(MutablePair.of(x, y)).getCh() + " " + MutablePair.of(x, y) + "\n");
 
         turn++;
